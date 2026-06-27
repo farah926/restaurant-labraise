@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>La Braise – Restaurant Méditerranéen</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --noir: #1a1410; --brun: #2e1f0e; --or: #c8973a;
+      --creme: #f5ede0; --gris: #8a7d6e; --blanc: #fdf8f2;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--blanc); color: var(--noir); overflow-x: hidden; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 5vw;
+      background: rgba(26,20,16,0.95);
+      backdrop-filter: blur(8px);
+      transition: padding 0.3s;
+    }
+    nav.scrolled { padding: 0.8rem 5vw; box-shadow: 0 2px 20px rgba(0,0,0,0.3); }
+    .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; color: var(--or); }
+    .nav-links { display: flex; gap: 2.2rem; list-style: none; }
+    .nav-links a { color: var(--creme); text-decoration: none; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; transition: all 0.2s; }
+    .nav-links a:hover { opacity: 1; color: var(--or); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .hamburger span { width: 24px; height: 2px; background: var(--creme); transition: all 0.3s; }
+    .mobile-menu { display: none; position: fixed; top: 60px; left: 0; right: 0; background: var(--noir); padding: 1.5rem 5vw; flex-direction: column; gap: 1.2rem; z-index: 99; }
+    .mobile-menu a { color: var(--creme); text-decoration: none; font-size: 1.1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .mobile-menu.open { display: flex; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(160deg, var(--brun) 0%, var(--noir) 60%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 0 5vw; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 60% 40%, rgba(200,151,58,0.12) 0%, transparent 70%);
+    }
+    .hero-eyebrow { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--or); margin-bottom: 1.4rem; opacity: 0; animation: fadeUp 0.8s 0.2s forwards; }
+    .hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(3.2rem, 8vw, 7rem); font-weight: 400; line-height: 1.05; color: var(--creme); opacity: 0; animation: fadeUp 0.8s 0.4s forwards; }
+    .hero h1 em { font-style: italic; color: var(--or); }
+    .hero-sub { margin-top: 1.6rem; font-size: 1rem; color: rgba(245,237,224,0.6); font-weight: 300; max-width: 420px; line-height: 1.7; opacity: 0; animation: fadeUp 0.8s 0.6s forwards; }
+    .btn-group { margin-top: 2.8rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; opacity: 0; animation: fadeUp 0.8s 0.8s forwards; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+
+    .btn { padding: 0.85rem 2.2rem; border-radius: 2px; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'DM Sans', sans-serif; cursor: pointer; text-decoration: none; transition: all 0.25s; display: inline-block; }
+    .btn-primary { background: var(--or); color: var(--noir); border: none; font-weight: 500; }
+    .btn-primary:hover { background: #d9a84a; transform: translateY(-2px); }
+    .btn-outline { background: transparent; color: var(--creme); border: 1px solid rgba(245,237,224,0.35); }
+    .btn-outline:hover { border-color: var(--or); color: var(--or); }
+
+    .scroll-hint { position: absolute; bottom: 2.2rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: rgba(245,237,224,0.3); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; }
+    .scroll-line { width: 1px; height: 40px; background: var(--or); opacity: 0.4; animation: scrollPulse 2s ease-in-out infinite; }
+    @keyframes scrollPulse { 0%,100%{opacity:0.2} 50%{opacity:0.7} }
+
+    /* ── REVEAL ON SCROLL ── */
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-left { opacity: 0; transform: translateX(-40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right { opacity: 0; transform: translateX(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+    /* ── SECTION BASE ── */
+    section { padding: 6rem 5vw; }
+    .section-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--or); margin-bottom: 0.8rem; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; line-height: 1.2; }
+    .divider { width: 40px; height: 2px; background: var(--or); margin: 1.4rem 0; }
+
+    /* ── STATS BAR ── */
+    .stats-bar { background: var(--or); padding: 2.5rem 5vw; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 1.5rem; }
+    .stat { text-align: center; }
+    .stat .num { font-family: 'Cormorant Garamond', serif; font-size: 2.6rem; font-weight: 600; color: var(--noir); display: block; }
+    .stat .lbl { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(26,20,16,0.65); }
+
+    /* ── À PROPOS ── */
+    .about { background: var(--creme); display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+    .about-img-wrap { position: relative; }
+    .img-placeholder { width: 100%; height: 380px; background: linear-gradient(135deg, #2e1f0e 0%, #4a3520 100%); border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.8rem; }
+    .img-placeholder span { font-size: 4rem; }
+    .img-placeholder p { color: rgba(245,237,224,0.5); font-size: 0.85rem; }
+    .about-badge { position: absolute; bottom: -20px; right: -20px; background: var(--noir); color: var(--creme); padding: 1.4rem 1.8rem; border-radius: 3px; text-align: center; border-left: 3px solid var(--or); }
+    .about-badge .num { font-size: 2.4rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; color: var(--or); display: block; }
+    .about-badge .lbl { font-size: 0.75rem; opacity: 0.6; }
+    .about-text p { color: var(--gris); line-height: 1.8; margin-top: 1.2rem; font-size: 0.97rem; }
+
+    /* ── MENU ── */
+    .menu { background: var(--blanc); }
+    .menu-tabs { display: flex; gap: 0.5rem; margin: 2rem 0; flex-wrap: wrap; }
+    .tab { padding: 0.6rem 1.4rem; border: 1px solid rgba(200,151,58,0.3); border-radius: 30px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; background: transparent; font-family: 'DM Sans', sans-serif; color: var(--noir); }
+    .tab.active, .tab:hover { background: var(--or); color: var(--noir); border-color: var(--or); }
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .menu-card { border: 1px solid rgba(200,151,58,0.15); border-radius: 4px; overflow: hidden; transition: all 0.3s; background: white; }
+    .menu-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(26,20,16,0.1); }
+    .card-img { height: 180px; display: flex; align-items: center; justify-content: center; font-size: 4rem; position: relative; overflow: hidden; }
+    .card-img-entree { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+    .card-img-plat { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
+    .card-img-dessert { background: linear-gradient(135deg, #fce4ec, #f8bbd0); }
+    .card-img-boisson { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+    .card-badge { position: absolute; top: 10px; right: 10px; background: var(--or); color: var(--noir); font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 500; }
+    .card-body { padding: 1.4rem; }
+    .card-name { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; }
+    .card-desc { color: var(--gris); font-size: 0.87rem; line-height: 1.6; margin-top: 0.4rem; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+    .card-price { color: var(--or); font-size: 1.1rem; font-weight: 500; }
+    .card-allergy { font-size: 0.72rem; color: var(--gris); }
+    .menu-card.hidden { display: none; }
+
+    /* ── RESERVATION ── */
+    .reservation { background: var(--noir); color: var(--creme); text-align: center; }
+    .reservation .section-title { color: var(--creme); }
+    .reservation > p { color: rgba(245,237,224,0.55); margin-top: 1rem; font-size: 0.95rem; }
+    .res-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2.5rem; max-width: 700px; margin-inline: auto; text-align: left; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245,237,224,0.5); }
+    .res-form input, .res-form select, .res-form textarea {
+      padding: 0.9rem 1.2rem; border-radius: 2px;
+      background: rgba(245,237,224,0.07);
+      border: 1px solid rgba(245,237,224,0.15);
+      color: var(--creme); font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+      outline: none; transition: border-color 0.2s; width: 100%;
+    }
+    .res-form input:focus, .res-form select:focus, .res-form textarea:focus { border-color: var(--or); }
+    .res-form input::placeholder, .res-form textarea::placeholder { color: rgba(245,237,224,0.25); }
+    .res-form select option { background: var(--noir); }
+    .res-form textarea { resize: vertical; min-height: 90px; }
+    #form-status { margin-top: 1rem; font-size: 0.9rem; min-height: 1.4rem; }
+    #form-status.success { color: #81c784; }
+    #form-status.error { color: #e57373; }
+
+    /* ── GALERIE ── */
+    .gallery { background: var(--creme); }
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: auto auto; gap: 1rem; margin-top: 2.5rem; }
+    .gallery-item { border-radius: 3px; overflow: hidden; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; cursor: pointer; transition: transform 0.3s; }
+    .gallery-item:hover { transform: scale(1.02); }
+    .gallery-item:nth-child(1) { background: linear-gradient(135deg,#ff8a65,#ff7043); grid-column: span 2; aspect-ratio: 16/9; }
+    .gallery-item:nth-child(2) { background: linear-gradient(135deg,#66bb6a,#43a047); }
+    .gallery-item:nth-child(3) { background: linear-gradient(135deg,#ffa726,#fb8c00); }
+    .gallery-item:nth-child(4) { background: linear-gradient(135deg,#42a5f5,#1e88e5); }
+    .gallery-item:nth-child(5) { background: linear-gradient(135deg,#ec407a,#d81b60); grid-column: span 2; aspect-ratio: 16/9; }
+
+    /* ── CARTE MAP ── */
+    .contact-section { background: var(--blanc); display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+    .contact-info { display: flex; flex-direction: column; gap: 1.6rem; margin-top: 2rem; }
+    .info-item { display: flex; gap: 1rem; align-items: flex-start; }
+    .info-icon { width: 44px; height: 44px; background: var(--or); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .info-item h4 { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gris); }
+    .info-item p { font-size: 0.95rem; margin-top: 0.2rem; line-height: 1.5; }
+    .map-wrap { border-radius: 4px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+    .map-wrap iframe { width: 100%; height: 380px; border: none; display: block; }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--noir); color: var(--creme); padding: 1rem 1.5rem; border-radius: 4px; border-left: 3px solid var(--or); font-size: 0.9rem; z-index: 999; transform: translateY(100px); opacity: 0; transition: all 0.4s; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── FOOTER ── */
+    footer { background: var(--noir); color: rgba(245,237,224,0.4); padding: 3rem 5vw; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
+    .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--or); }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { color: rgba(245,237,224,0.4); text-decoration: none; font-size: 0.82rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--or); }
+    .footer-copy { text-align: center; margin-top: 2rem; font-size: 0.8rem; border-top: 1px solid rgba(245,237,224,0.07); padding-top: 1.5rem; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .about, .contact-section { grid-template-columns: 1fr; gap: 2.5rem; }
+      .about-badge { right: 0; bottom: -15px; }
+      .res-form { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: 1; }
+      .gallery-grid { grid-template-columns: 1fr 1fr; }
+      .gallery-item:nth-child(1), .gallery-item:nth-child(5) { grid-column: span 2; }
+      .stats-bar { gap: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-logo">La Braise</div>
+  <ul class="nav-links">
+    <li><a href="#about">Histoire</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#gallery">Galerie</a></li>
+    <li><a href="#reservation">Réserver</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#about" onclick="closeMobile()">Histoire</a>
+  <a href="#menu" onclick="closeMobile()">Menu</a>
+  <a href="#gallery" onclick="closeMobile()">Galerie</a>
+  <a href="#reservation" onclick="closeMobile()">Réserver</a>
+  <a href="#contact" onclick="closeMobile()">Contact</a>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <p class="hero-eyebrow">Restaurant Méditerranéen · Tunis</p>
+  <h1>Une flamme,<br/><em>mille saveurs</em></h1>
+  <p class="hero-sub">Cuisine au feu de bois, produits locaux de saison, dans un écrin chaleureux au cœur de la ville.</p>
+  <div class="btn-group">
+    <a href="#reservation" class="btn btn-primary">Réserver une table</a>
+    <a href="#menu" class="btn btn-outline">Voir le menu</a>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>Découvrir</span>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat reveal"><span class="num">12</span><span class="lbl">Ans d'expérience</span></div>
+  <div class="stat reveal"><span class="num">4.9★</span><span class="lbl">Note Google</span></div>
+  <div class="stat reveal"><span class="num">200+</span><span class="lbl">Plats servis / jour</span></div>
+  <div class="stat reveal"><span class="num">100%</span><span class="lbl">Produits locaux</span></div>
+</div>
+
+<!-- À PROPOS -->
+<section class="about" id="about">
+  <div class="about-img-wrap reveal-left">
+    <div class="img-placeholder">
+      <span>🔥</span>
+      <p>Remplace par une vraie photo</p>
+    </div>
+    <div class="about-badge">
+      <span class="num">2012</span>
+      <span class="lbl">Fondé à Tunis</span>
+    </div>
+  </div>
+  <div class="about-text reveal-right">
+    <p class="section-label">Notre histoire</p>
+    <h2 class="section-title">Né du feu,<br/>nourri de passion</h2>
+    <div class="divider"></div>
+    <p>La Braise est née en 2012 d'une obsession simple : sublimer les produits méditerranéens par la cuisson au feu de bois. Chaque plat est pensé pour révéler la vérité de l'ingrédient.</p>
+    <p style="margin-top:0.8rem">Notre chef, formé à Lyon et Barcelone, revient aux sources avec une cuisine authentique, généreuse et sans compromis.</p>
+    <a href="#menu" class="btn btn-primary" style="margin-top:2rem">Découvrir le menu</a>
+  </div>
+</section>
+
+<!-- MENU -->
+<section class="menu" id="menu">
+  <p class="section-label reveal">Ce que nous proposons</p>
+  <h2 class="section-title reveal">Notre carte</h2>
+  <div class="menu-tabs reveal">
+    <button class="tab active" onclick="filterMenu('all')">Tout</button>
+    <button class="tab" onclick="filterMenu('entree')">Entrées</button>
+    <button class="tab" onclick="filterMenu('plat')">Plats</button>
+    <button class="tab" onclick="filterMenu('dessert')">Desserts</button>
+    <button class="tab" onclick="filterMenu('boisson')">Boissons</button>
+  </div>
+  <div class="menu-grid">
+    <div class="menu-card reveal" data-cat="entree">
+      <div class="card-img card-img-entree">🥗<span class="card-badge">Végétarien</span></div>
+      <div class="card-body">
+        <div class="card-name">Salade du Marché</div>
+        <div class="card-desc">Légumes rôtis au four, fromage de chèvre frais, vinaigrette au citron confit.</div>
+        <div class="card-footer"><span class="card-price">18 DT</span><span class="card-allergy">🌿 Sans gluten</span></div>
+      </div>
+    </div>
+    <div class="menu-card reveal" data-cat="entree">
+      <div class="card-img card-img-entree">🦐</div>
+      <div class="card-body">
+        <div class="card-name">Gambas à l'Ail</div>
+        <div class="card-desc">Grosses crevettes sautées au beurre d'ail, persil frais et citron de Nabeul.</div>
+        <div class="card-footer"><span class="card-price">28 DT</span><span class="card-allergy">🦐 Crustacés</span></div>
+      </div>
+    </div>
+    <div class="menu-card reveal" data-cat="plat">
+      <div class="card-img card-img-plat">🐟<span class="card-badge">Chef</span></div>
+      <div class="card-body">
+        <div class="card-name">Dorade à la Braise</div>
+        <div class="card-desc">Dorade entière grillée au feu de bois, huile d'olive vierge, ail rôti.</div>
+        <div class="card-footer"><span class="card-price">42 DT</span><span class="card-allergy">🐟 Poisson</span></div>
+      </div>
+    </div>
+    <div class="menu-card reveal" data-cat="plat">
+      <div class="card-img card-img-plat">🥩</div>
+      <div class="card-body">
+        <div class="card-name">Agneau des Hautes Plaines</div>
+        <div class="card-desc">Épaule d'agneau confite 8h, jus réduit aux épices douces, semoule au beurre.</div>
+        <div class="card-footer"><span class="card-price">56 DT</span><span class="card-allergy">🌾 Contient gluten</span></div>
+      </div>
+    </div>
+    <div class="menu-card reveal" data-cat="plat">
+      <div class="card-img card-img-plat">🍝</div>
+      <div class="card-body">
+        <div class="card-name">Pâtes Maison Truffe</div>
+        <div class="card-desc">Tagliolini faites maison, crème de truffe noire, parmesan 24 mois.</div>
+        <div class="card-footer"><span class="card-price">38 DT</span><span class="card-allergy">🌾 Contient gluten</span></div>
+      </div>
+    </div>
+    <div class="menu-card reveal" data-cat="dessert">
+      <div class="card-img card-img-dessert">🍮<span class="card-badge">Signature</span></div>
+      <div class="card-body">
+        <div class="card-name">Crème Brûlée au Jasmin</div>
+        <div class="card-desc">Crème onctueuse infusée à la fleur de jasmin de Grombalia, caramel soufflé.</div>
+        <div class="card-footer"><span class="card-price">14 DT</span><span class="card-allergy">🥛 Contient lactose</span></div>
+      </div>
+    </div>
+    <div class="menu-card reveal" data-cat="dessert">
+      <div class="card-img card-img-dessert">🍫</div>
+      <div class="card-body">
+        <div class="card-name">Fondant Chocolat Noir</div>
+        <div class="card-desc">Cœur coulant au chocolat 70%, glace vanille bourbon, éclats de pistache.</div>
+        <div class="card-footer"><span class="card-price">16 DT</span><span class="card-allergy">🥛 Contient lactose</span></div>
+      </div>
+    </div>
+    <div class="menu-card reveal" data-cat="boisson">
+      <div class="card-img card-img-boisson">🍷</div>
+      <div class="card-body">
+        <div class="card-name">Sélection Vins Locaux</div>
+        <div class="card-desc">Carte soigneusement sélectionnée parmi les meilleurs domaines tunisiens.</div>
+        <div class="card-footer"><span class="card-price">À partir de 22 DT</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALERIE -->
+<section class="gallery" id="gallery">
+  <p class="section-label reveal">Ambiance</p>
+  <h2 class="section-title reveal">Un cadre unique</h2>
+  <div class="gallery-grid">
+    <div class="gallery-item reveal">🔥</div>
+    <div class="gallery-item reveal">🥗</div>
+    <div class="gallery-item reveal">🍷</div>
+    <div class="gallery-item reveal">🌿</div>
+    <div class="gallery-item reveal">🍽️</div>
+  </div>
+  <p style="color:var(--gris);font-size:0.85rem;margin-top:1.5rem;text-align:center">💡 Remplace les emojis par de vraies photos de restaurant</p>
+</section>
+
+<!-- RÉSERVATION -->
+<section class="reservation" id="reservation">
+  <p class="section-label reveal">Nous rejoindre</p>
+  <h2 class="section-title reveal">Réserver une table</h2>
+  <p class="reveal">Disponible du mardi au dimanche. Confirmation par email dans les 2h.</p>
+  <div class="res-form" id="reservationForm">
+    <div class="form-group">
+      <label>Votre nom *</label>
+      <input type="text" id="res-name" placeholder="Ahmed Ben Ali" required/>
+    </div>
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="res-email" placeholder="ahmed@email.com" required/>
+    </div>
+    <div class="form-group">
+      <label>Téléphone</label>
+      <input type="tel" id="res-phone" placeholder="+216 xx xxx xxx"/>
+    </div>
+    <div class="form-group">
+      <label>Nombre de personnes *</label>
+      <select id="res-guests">
+        <option>1 personne</option>
+        <option selected>2 personnes</option>
+        <option>3–4 personnes</option>
+        <option>5–8 personnes</option>
+        <option>9+ personnes (groupe)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Date souhaitée *</label>
+      <input type="date" id="res-date"/>
+    </div>
+    <div class="form-group">
+      <label>Service</label>
+      <select id="res-time">
+        <option>Déjeuner (12h–15h)</option>
+        <option>Dîner (19h–23h)</option>
+      </select>
+    </div>
+    <div class="form-group full">
+      <label>Message ou demande spéciale</label>
+      <textarea id="res-message" placeholder="Allergie, anniversaire, table en terrasse..."></textarea>
+    </div>
+    <div class="form-group full" style="text-align:center">
+      <button class="btn btn-primary" onclick="submitReservation()" style="width:100%;padding:1rem;font-size:0.9rem" id="submitBtn">
+        Confirmer la réservation
+      </button>
+      <p id="form-status"></p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT + MAP -->
+<section class="contact-section" id="contact">
+  <div>
+    <p class="section-label reveal">Nous trouver</p>
+    <h2 class="section-title reveal">Venez nous rendre visite</h2>
+    <div class="contact-info">
+      <div class="info-item reveal">
+        <div class="info-icon">📍</div>
+        <div>
+          <h4>Adresse</h4>
+          <p>12 Rue de Marseille<br/>Les Berges du Lac, Tunis</p>
+        </div>
+      </div>
+      <div class="info-item reveal">
+        <div class="info-icon">🕐</div>
+        <div>
+          <h4>Horaires</h4>
+          <p>Mar–Dim : 12h–15h & 19h–23h<br/><span style="color:var(--or)">Lundi : Fermé</span></p>
+        </div>
+      </div>
+      <div class="info-item reveal">
+        <div class="info-icon">📞</div>
+        <div>
+          <h4>Téléphone</h4>
+          <p><a href="tel:+21671000000" style="color:inherit;text-decoration:none">+216 71 000 000</a></p>
+        </div>
+      </div>
+      <div class="info-item reveal">
+        <div class="info-icon">✉️</div>
+        <div>
+          <h4>Email</h4>
+          <p><a href="mailto:contact@labraise.tn" style="color:inherit;text-decoration:none">contact@labraise.tn</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="reveal-right">
+    <div class="map-wrap">
+      <!-- Vraie carte Google Maps - Les Berges du Lac, Tunis -->
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3194.5!2d10.2306!3d36.8365!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12fd34e8!2sLes%20Berges%20du%20Lac%2C%20Tunis!5e0!3m2!1sfr!2stn!4v1"
+        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">La Braise</div>
+    <div class="footer-links">
+      <a href="#about">Histoire</a>
+      <a href="#menu">Menu</a>
+      <a href="#reservation">Réserver</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    © 2024 La Braise · Restaurant Méditerranéen · Tunis &nbsp;|&nbsp; Site réalisé par <strong style="color:var(--or)">Ton Nom – Freelance Dev</strong>
+  </div>
+</footer>
+
+<script>
+  // ── NAV SCROLL ──
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // ── HAMBURGER ──
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  });
+  function closeMobile() { document.getElementById('mobileMenu').classList.remove('open'); }
+
+  // ── SCROLL REVEAL ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => observer.observe(el));
+
+  // ── MENU FILTER ──
+  function filterMenu(cat) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.menu-card').forEach(card => {
+      if (cat === 'all' || card.dataset.cat === cat) card.classList.remove('hidden');
+      else card.classList.add('hidden');
+    });
+  }
+
+  // ── SET MIN DATE ──
+  const dateInput = document.getElementById('res-date');
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.min = today;
+  dateInput.value = today;
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ── RESERVATION FORM ──
+  // Pour activer l'envoi email réel :
+  // 1. Va sur https://emailjs.com et crée un compte gratuit
+  // 2. Crée un service Email + un template
+  // 3. Remplace les valeurs ci-dessous par tes vraies clés
+  const EMAILJS_PUBLIC_KEY  = 'TON_PUBLIC_KEY';   // ex: 'user_abc123'
+  const EMAILJS_SERVICE_ID  = 'TON_SERVICE_ID';   // ex: 'service_xyz'
+  const EMAILJS_TEMPLATE_ID = 'TON_TEMPLATE_ID';  // ex: 'template_abc'
+
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+
+  async function submitReservation() {
+    const name    = document.getElementById('res-name').value.trim();
+    const email   = document.getElementById('res-email').value.trim();
+    const phone   = document.getElementById('res-phone').value.trim();
+    const guests  = document.getElementById('res-guests').value;
+    const date    = document.getElementById('res-date').value;
+    const time    = document.getElementById('res-time').value;
+    const message = document.getElementById('res-message').value.trim();
+    const status  = document.getElementById('form-status');
+    const btn     = document.getElementById('submitBtn');
+
+    if (!name || !email || !date) {
+      status.textContent = '⚠️ Veuillez remplir les champs obligatoires (nom, email, date).';
+      status.className = 'error';
+      return;
+    }
+
+    btn.textContent = 'Envoi en cours...';
+    btn.disabled = true;
+    status.textContent = '';
+
+    // Si les clés EmailJS sont configurées → envoi réel
+    if (EMAILJS_PUBLIC_KEY !== 'TON_PUBLIC_KEY') {
+      try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          from_name: name, from_email: email, phone, guests, date, time, message
+        });
+        status.textContent = '✅ Réservation envoyée ! Confirmation dans les 2h.';
+        status.className = 'success';
+        showToast('🎉 Réservation confirmée pour ' + name + ' !');
+        document.getElementById('res-name').value = '';
+        document.getElementById('res-email').value = '';
+        document.getElementById('res-phone').value = '';
+        document.getElementById('res-message').value = '';
+      } catch (err) {
+        status.textContent = '❌ Erreur d\'envoi. Appelez-nous directement.';
+        status.className = 'error';
+      }
+    } else {
+      // Mode démo (sans clés EmailJS)
+      setTimeout(() => {
+        status.textContent = '✅ [DÉMO] Réservation simulée pour ' + name + ' – ' + guests + ' – ' + date;
+        status.className = 'success';
+        showToast('🎉 Réservation simulée pour ' + name + ' !');
+      }, 1200);
+    }
+
+    setTimeout(() => { btn.textContent = 'Confirmer la réservation'; btn.disabled = false; }, 2000);
+  }
+</script>
+</body>
+</html>
